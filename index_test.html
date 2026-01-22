@@ -1,1 +1,547 @@
 
+<div class="app-container">
+    <div class="header-section">
+      <div class="title-text">Handgrip Strength Calculator</div>
+    </div>
+    <div class="subtitle">
+      Enter the details below. When you click <strong>“Save my result &amp; show results”</strong>,
+      your entry will be logged for attendance/record‑keeping, and your handgrip result will be
+      compared with a simple reference range.
+    </div>
+
+    <!-- Input fields -->
+    <div class="field-group">
+      <label for="testDate">Date of test</label>
+      <input type="date" id="testDate" />
+    </div>
+
+    <div class="field-group">
+      <label for="gender">Gender</label>
+      <select id="gender">
+        <option value="">-- Please select --</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other / Prefer not to say</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label for="ageRange">Age range</label>
+      <select id="ageRange">
+        <option value="">-- Please select --</option>
+        <option value="18-29">18–29</option>
+        <option value="30-39">30–39</option>
+        <option value="40-49">40–49</option>
+        <option value="50-59">50–59</option>
+        <option value="60-69">60–69</option>
+        <option value="70+">70+</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label for="leftGrip">Left handgrip strength (kg)</label>
+      <input type="number" id="leftGrip" min="0" step="0.1" placeholder="e.g. 32.5" />
+    </div>
+
+    <div class="field-group">
+      <label for="rightGrip">Right handgrip strength (kg)</label>
+      <input type="number" id="rightGrip" min="0" step="0.1" placeholder="e.g. 35.0" />
+    </div>
+
+    <!-- Button: Save + Calculate -->
+    <div class="button-row">
+      <!-- *** ATTENDANCE / SAVE FLOW: single main button *** -->
+      <button id="saveAndCalculateBtn" type="button">
+        Save my result &amp; show results
+      </button>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="results-section" style="display: none;">
+      <div class="results-header">Results</div>
+      <div id="refRangeText" class="ref-range"></div>
+
+      <div class="status-row">
+        <div>
+          <span class="status-label">Left hand:</span>
+          <span id="leftValueText"></span>
+        </div>
+        <div id="leftStatusBadge"></div>
+      </div>
+
+      <div class="status-row">
+        <div>
+          <span class="status-label">Right hand:</span>
+          <span id="rightValueText"></span>
+        </div>
+        <div id="rightStatusBadge"></div>
+      </div>
+
+      <div id="summaryText" class="summary-text"></div>
+      <div style="margin-top: 12px; text-align: right;">
+    <button type="button" id="printBtn" class="secondary">
+      Print / Save as PDF
+    </button>
+  </div>
+      <div class="note">
+        Note: Reference values are example ranges only. Please refer to your local guidelines or
+        published reference values for clinical use.
+      </div>
+    </div>
+  </div>
+<!-- Hidden iframe used as the submission target for background logging -->
+<iframe
+  name="hiddenGoogleFormTarget"
+  style="display:none; width:0; height:0; border:0;"
+></iframe>
+
+<!-- Hidden form that posts to Google Forms in the background -->
+<form
+  id="hiddenGoogleForm"
+  method="POST"
+  target="hiddenGoogleFormTarget"
+  style="display:none;"
+>
+  <!-- IMPORTANT: set this action to your actual Google Form 'formResponse' URL -->
+  <!-- Example: https://docs.google.com/forms/d/e/FORM_ID/formResponse -->
+  <!-- You can also set this via JS if you prefer. -->
+</form>
+<form
+  id="hiddenGoogleForm"
+  method="POST"
+  target="hiddenGoogleFormTarget"
+  style="display:none;"
+  action="https://docs.google.com/forms/d/e/1FAIpQLScAt6DoY7M1ngoUIBm7jRxPq11NuQTEnH3Ki4evvBA1mewmBQ/formResponse"
+>
+  <!-- Date of Test -->
+  <input type="hidden" name="entry.315653689" id="gf_date" />
+  <!-- Gender -->
+  <input type="hidden" name="entry.273607176" id="gf_gender" />
+  <!-- Age Range -->
+  <input type="hidden" name="entry.686339957" id="gf_ageRange" />
+  <!-- Left Handgrip Strength (kg) -->
+  <input type="hidden" name="entry.52578351" id="gf_leftGrip" />
+  <!-- Right Handgrip Strength (kg) -->
+  <input type="hidden" name="entry.1432233132" id="gf_rightGrip" />
+  <!-- Optional: Unit / Session code -->
+  <!-- <input type="hidden" name="entry.666666" id="gf_unit" /> -->
+</form>
+
+// -------------------------------------------------
+    // Reference ranges (dummy example values only).
+    // Update these later with real reference data.
+    // -------------------------------------------------
+    const referenceRanges = {
+      Male: {
+        "18-29": { min: 36, max: 56 },
+        "30-39": { min: 34, max: 54 },
+        "40-49": { min: 32, max: 50 },
+        "50-59": { min: 30, max: 46 },
+        "60-69": { min: 28, max: 42 },
+        "70+": { min: 24, max: 38 }
+      },
+      Female: {
+        "18-29": { min: 22, max: 36 },
+        "30-39": { min: 20, max: 34 },
+        "40-49": { min: 18, max: 32 },
+        "50-59": { min: 16, max: 30 },
+        "60-69": { min: 14, max: 28 },
+        "70+": { min: 12, max: 26 }
+      },
+      Other: {
+        "18-29": { min: 22, max: 46 },
+        "30-39": { min: 20, max: 44 },
+        "40-49": { min: 18, max: 40 },
+        "50-59": { min: 16, max: 36 },
+        "60-69": { min: 14, max: 32 },
+        "70+": { min: 12, max: 30 }
+      }
+    };
+
+    // Latest result snapshot (optional to reuse)
+    let latestResult = null;
+
+    function classifyStrength(value, min, max) {
+      if (value < min) return "below";
+      if (value > max) return "above";
+      return "within";
+    }
+
+    function createBadge(status) {
+      const span = document.createElement("span");
+      span.classList.add("badge");
+      if (status === "below") {
+        span.classList.add("badge-below");
+        span.textContent = "Below range";
+      } else if (status === "within") {
+        span.classList.add("badge-within");
+        span.textContent = "Within range";
+      } else if (status === "above") {
+        span.classList.add("badge-above");
+        span.textContent = "Above range";
+      }
+      return span;
+    }
+
+    // -------------------------------------------------
+    // Calculation logic (pure function on inputs)
+    // -------------------------------------------------
+    function calculateAndDisplay(inputs) {
+      const { testDate, genderRaw, ageRange, leftGrip, rightGrip } = inputs;
+
+      const genderKey =
+        genderRaw === "Male" || genderRaw === "Female" ? genderRaw : "Other";
+
+      const refForGender = referenceRanges[genderKey];
+      if (!refForGender || !refForGender[ageRange]) {
+        alert("No reference range found for the selected gender and age group.");
+        return;
+      }
+
+      const ref = refForGender[ageRange];
+      const leftStatus = classifyStrength(leftGrip, ref.min, ref.max);
+      const rightStatus = classifyStrength(rightGrip, ref.min, ref.max);
+
+      // Update DOM
+      const resultsDiv = document.getElementById("results");
+      const refRangeText = document.getElementById("refRangeText");
+      const leftValueText = document.getElementById("leftValueText");
+      const rightValueText = document.getElementById("rightValueText");
+      const leftStatusBadge = document.getElementById("leftStatusBadge");
+      const rightStatusBadge = document.getElementById("rightStatusBadge");
+      const summaryText = document.getElementById("summaryText");
+
+      refRangeText.textContent =
+        "Reference range for " +
+        genderRaw +
+        " aged " +
+        ageRange +
+        ": " +
+        ref.min +
+        " – " +
+        ref.max +
+        " kg (example values).";
+
+      leftValueText.textContent = leftGrip.toFixed(1) + " kg";
+      rightValueText.textContent = rightGrip.toFixed(1) + " kg";
+
+      leftStatusBadge.innerHTML = "";
+      leftStatusBadge.appendChild(createBadge(leftStatus));
+
+      rightStatusBadge.innerHTML = "";
+      rightStatusBadge.appendChild(createBadge(rightStatus));
+
+      let summary = "Summary: ";
+      const parts = [];
+      parts.push("Left hand is " + leftStatus + " the reference range.");
+      parts.push("Right hand is " + rightStatus + " the reference range.");
+      summary += parts.join(" ");
+
+      summaryText.textContent = summary;
+      resultsDiv.style.display = "block";
+
+      latestResult = {
+        testDate,
+        gender: genderRaw,
+        ageRange,
+        leftGrip: leftGrip.toFixed(1),
+        rightGrip: rightGrip.toFixed(1),
+        leftStatus,
+        rightStatus,
+        refMin: ref.min,
+        refMax: ref.max
+      };
+    }
+
+    // -------------------------------------------------
+    // ATTENDANCE / SAVE FLOW:
+    // 1) Validate inputs
+    // 2) Log data via pre-filled Google Form URL
+    // 3) THEN call calculateAndDisplay() to show results
+    // -------------------------------------------------
+    document
+      .getElementById("saveAndCalculateBtn")
+      .addEventListener("click", function () {
+        const testDate = document.getElementById("testDate").value;
+        const genderRaw = document.getElementById("gender").value;
+        const ageRange = document.getElementById("ageRange").value;
+        const leftGripStr = document.getElementById("leftGrip").value;
+        const rightGripStr = document.getElementById("rightGrip").value;
+
+        if (!genderRaw || !ageRange || !leftGripStr || !rightGripStr) {
+          alert("Please fill in gender, age range, and both handgrip values.");
+          return;
+        }
+
+        const leftGrip = parseFloat(leftGripStr);
+        const rightGrip = parseFloat(rightGripStr);
+        if (isNaN(leftGrip) || isNaN(rightGrip)) {
+          alert("Please enter valid numeric values for handgrip strength.");
+          return;
+        }
+
+        const inputBundle = {
+          testDate,
+          genderRaw,
+          ageRange,
+          leftGrip,
+          rightGrip
+        };
+
+        // 1) LOGGING STEP — GOOGLE FORM
+        // -----------------------------
+        // Replace googleFormBaseUrl and entry.* IDs with your real Google Form.
+        const googleFormBaseUrl =
+          "https://docs.google.com/forms/d//e/1FAIpQLScAt6DoY7M1ngoUIBm7jRxPq11NuQTEnH3Ki4evvBA1mewmBQ//viewform?usp=pp_url";
+
+        const params = new URLSearchParams();
+        // Example only – change entry IDs to match your form fields
+        // e.g. Date of test
+        params.append("entry.315653689", inputBundle.testDate || "");
+        // Gender
+        params.append("entry.273607176", inputBundle.genderRaw);
+        // Age range
+        params.append("entry.686339957", inputBundle.ageRange);
+        // Left handgrip (kg)
+        params.append("entry.52578351", inputBundle.leftGrip.toFixed(1));
+        // Right handgrip (kg)
+        params.append("entry.1432233132", inputBundle.rightGrip.toFixed(1));
+        // Optionally: you can add more fields or later add left/right status
+        // after a second submission or a different form.
+
+        const fullUrl = googleFormBaseUrl + "&" + params.toString();
+   // ---------------------------------------------
+    // 1) BACKGROUND LOGGING TO GOOGLE FORMS
+    // ---------------------------------------------
+    // Fill hidden form fields with current values
+    const gfDate = document.getElementById("gf_date");
+    const gfGender = document.getElementById("gf_gender");
+    const gfAgeRange = document.getElementById("gf_ageRange");
+    const gfLeftGrip = document.getElementById("gf_leftGrip");
+    const gfRightGrip = document.getElementById("gf_rightGrip");
+
+    if (gfDate && gfGender && gfAgeRange && gfLeftGrip && gfRightGrip) {
+      gfDate.value = inputBundle.testDate || "";
+      gfGender.value = inputBundle.genderRaw;
+      gfAgeRange.value = inputBundle.ageRange;
+      gfLeftGrip.value = inputBundle.leftGrip.toFixed(1);
+      gfRightGrip.value = inputBundle.rightGrip.toFixed(1);
+
+      // Submit the hidden form to Google Forms via the hidden iframe
+      const hiddenForm = document.getElementById("hiddenGoogleForm");
+      hiddenForm.submit();
+      // Note: This is a standard form POST; Google receives it in the background
+      // via the invisible iframe, and the user stays on this page.
+    }
+
+    // ---------------------------------------------
+    // 2) LOCAL CALCULATION AND DISPLAY
+    // ---------------------------------------------
+    calculateAndDisplay(inputBundle);
+  });
+      // Print / Save as PDF
+document.getElementById("printBtn").addEventListener("click", function () {
+  // This opens the browser's print dialog.
+  // Users can choose "Save as PDF" in the printer list.
+  window.print();
+});/* Page layout */
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app-container {
+      max-width: 520px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 24px 20px 28px;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+      box-sizing: border-box;
+    }
+
+    .header-section {
+      margin-bottom: 8px;
+      text-align: left;
+    }
+
+    .title-text {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1f2933;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 18px;
+    }
+
+    .field-group {
+      margin-top: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 4px;
+    }
+
+    input[type="date"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      box-sizing: border-box;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input[type="date"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    }
+
+    .button-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      padding: 10px;
+      border: none;
+      width: 100%;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 999px;
+      transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+    }
+
+    button:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 5px rgba(37, 99, 235, 0.35);
+    }
+
+    button:focus-visible {
+      outline: 2px solid #1d4ed8;
+      outline-offset: 2px;
+    }
+
+    .results-section {
+      margin-top: 18px;
+      font-size: 14px;
+      padding: 14px 10px;
+      border-radius: 10px;
+      background: #f3f4f6;
+      color: #111827;
+      border: 1px dashed #d1d5db;
+    }
+
+    .results-header {
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .ref-range {
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+    }
+
+    .status-label {
+      font-weight: 600;
+    }
+
+    .badge {
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .badge-below {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .badge-within {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .badge-above {
+      background: #ffedd5;
+      color: #92400e;
+      border: 1px solid #fed7aa;
+    }
+
+    .summary-text {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #374151;
+    }
+
+    .note {
+      margin-top: 12px;
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    @media (max-width: 480px) {
+      .app-container {
+        padding: 20px 14px 24px;
+      }
+    }
+    @media print {
+  body {
+    background: #ffffff;
+    margin: 0;
+    padding: 0;
+  }
+
+  .app-container {
+    box-shadow: none;
+    max-width: 100%;
+    border-radius: 0;
+  }
+
+  /* Hide the Save button row when printing if you want only the results */
+  .button-row {
+    display: none;
+  }
+
+  /* Ensure results are visible */
+  #results {
+    display: block !important;
+  }
+}
+
