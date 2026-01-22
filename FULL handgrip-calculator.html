@@ -1,0 +1,388 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Handgrip Strength Calculator</title>
+
+<style>
+  /* Page layout */
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .app-container {
+    max-width: 520px;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px 20px 28px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    box-sizing: border-box;
+  }
+
+  .header-section {
+    margin-bottom: 8px;
+    text-align: left;
+  }
+
+  .title-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1f2933;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 18px;
+  }
+
+  .field-group {
+    margin-top: 14px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 4px;
+  }
+
+  input[type="date"],
+  input[type="number"],
+  select {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  input[type="date"]:focus,
+  input[type="number"]:focus,
+  select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  }
+
+  .button-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  button {
+    background: #2563eb;
+    color: white;
+    padding: 10px;
+    border: none;
+    width: 100%;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 999px;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
+  }
+
+  button:hover {
+    background: #1d4ed8;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+  }
+
+  button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 5px rgba(37, 99, 235, 0.35);
+  }
+
+  .results-section {
+    margin-top: 18px;
+    font-size: 14px;
+    padding: 14px 10px;
+    border-radius: 10px;
+    background: #f3f4f6;
+    color: #111827;
+    border: 1px dashed #d1d5db;
+  }
+
+  .results-header {
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .ref-range {
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  .status-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+  }
+
+  .status-label {
+    font-weight: 600;
+  }
+
+  .badge {
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+  }
+
+  .badge-below {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+
+  .badge-within {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+  }
+
+  .badge-above {
+    background: #ffedd5;
+    color: #92400e;
+    border: 1px solid #fed7aa;
+  }
+
+  .summary-text {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #374151;
+  }
+
+  .note {
+    margin-top: 12px;
+    font-size: 11px;
+    color: #6b7280;
+  }
+
+  @media (max-width: 480px) {
+    .app-container {
+      padding: 20px 14px 24px;
+    }
+  }
+
+  @media print {
+    body {
+      background: #ffffff;
+      margin: 0;
+      padding: 0;
+    }
+
+    .app-container {
+      box-shadow: none;
+      max-width: 100%;
+      border-radius: 0;
+    }
+
+    .button-row {
+      display: none;
+    }
+
+    #results {
+      display: block !important;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="app-container">
+    <div class="header-section">
+        <div class="title-text">Handgrip Strength Calculator</div>
+    </div>
+
+    <div class="subtitle">
+      Enter the details below. When you click <strong>“Save my result &amp; show results”</strong>,
+      your entry will be logged for attendance/record‑keeping, and your handgrip result will be
+      compared with a simple reference range.
+    </div>
+
+    <!-- Input fields -->
+    <div class="field-group">
+      <label for="testDate">Date of test</label>
+      <input type="date" id="testDate" />
+    </div>
+
+    <div class="field-group">
+      <label for="gender">Gender</label>
+      <select id="gender">
+        <option value="">-- Please select --</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other / Prefer not to say</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label for="ageRange">Age range</label>
+      <select id="ageRange">
+        <option value="">-- Please select --</option>
+        <option value="18-29">18–29</option>
+        <option value="30-39">30–39</option>
+        <option value="40-49">40–49</option>
+        <option value="50-59">50–59</option>
+        <option value="60-69">60–69</option>
+        <option value="70+">70+</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label for="leftGrip">Left handgrip strength (kg)</label>
+      <input type="number" id="leftGrip" min="0" step="0.1" placeholder="e.g. 32.5" />
+    </div>
+
+    <div class="field-group">
+      <label for="rightGrip">Right handgrip strength (kg)</label>
+      <input type="number" id="rightGrip" min="0" step="0.1" placeholder="e.g. 35.0" />
+    </div>
+
+    <!-- Button -->
+    <div class="button-row">
+      <button id="saveAndCalculateBtn" type="button">
+        Save my result &amp; show results
+      </button>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="results-section" style="display: none;">
+      <div class="results-header">Results</div>
+      <div id="refRangeText" class="ref-range"></div>
+
+      <div class="status-row">
+        <div>
+          <span class="status-label">Left hand:</span>
+          <span id="leftValueText"></span>
+        </div>
+        <div id="leftStatusBadge"></div>
+      </div>
+
+      <div class="status-row">
+        <div>
+          <span class="status-label">Right hand:</span>
+          <span id="rightValueText"></span>
+        </div>
+        <div id="rightStatusBadge"></div>
+      </div>
+
+      <div id="summaryText" class="summary-text"></div>
+
+      <div style="margin-top: 12px; text-align: right;">
+        <button type="button" id="printBtn" class="secondary">
+          Print / Save as PDF
+        </button>
+      </div>
+
+      <div class="note">
+        Note: Reference values are example ranges only. Please refer to your local guidelines or
+        published reference values for clinical use.
+      </div>
+    </div>
+</div>
+
+<!-- Hidden iframe for Google Form -->
+<iframe name="hiddenGoogleFormTarget" style="display:none; width:0; height:0; border:0;"></iframe>
+
+<!-- Hidden Google Form submission -->
+<form
+  id="hiddenGoogleForm"
+  method="POST"
+  target="hiddenGoogleFormTarget"
+  style="display:none;"
+  action="https://docs.google.com/forms/d/e/1FAIpQLScAt6DoY7M1ngoUIBm7jRxPq11NuQTEnH3Ki4evvBA1mewmBQ/formResponse"
+>
+  <input type="hidden" name="entry.315653689" id="gf_date" />
+  <input type="hidden" name="entry.273607176" id="gf_gender" />
+  <input type="hidden" name="entry.686339957" id="gf_ageRange" />
+  <input type="hidden" name="entry.52578351" id="gf_leftGrip" />
+  <input type="hidden" name="entry.1432233132" id="gf_rightGrip" />
+</form>
+
+<script>
+/* ============================
+   CALCULATOR + GOOGLE FORM
+   ============================ */
+
+document.getElementById("saveAndCalculateBtn").addEventListener("click", function () {
+
+  const testDate = document.getElementById("testDate").value;
+  const gender = document.getElementById("gender").value;
+  const ageRange = document.getElementById("ageRange").value;
+  const left = parseFloat(document.getElementById("leftGrip").value);
+  const right = parseFloat(document.getElementById("rightGrip").value);
+
+  if (!testDate || !gender || !ageRange || isNaN(left) || isNaN(right)) {
+    alert("Please fill in all fields before saving.");
+    return;
+  }
+
+  // Simple reference ranges (example only)
+  const ranges = {
+    Male:    { min: 30, max: 55 },
+    Female:  { min: 18, max: 38 },
+    Other:   { min: 20, max: 45 }
+  };
+
+  const ref = ranges[gender] || ranges["Other"];
+
+  // Update results
+  document.getElementById("refRangeText").textContent =
+    `Reference range: ${ref.min}–${ref.max} kg`;
+
+  function badge(value) {
+    if (value < ref.min)
+      return '<span class="badge badge-below">Below</span>';
+    if (value > ref.max)
+      return '<span class="badge badge-above">Above</span>';
+    return '<span class="badge badge-within">Within</span>';
+  }
+
+  document.getElementById("leftValueText").textContent = left + " kg";
+  document.getElementById("rightValueText").textContent = right + " kg";
+
+  document.getElementById("leftStatusBadge").innerHTML = badge(left);
+  document.getElementById("rightStatusBadge").innerHTML = badge(right);
+
+  document.getElementById("summaryText").textContent =
+    "These values are for general reference only.";
+
+  document.getElementById("results").style.display = "block";
+
+  // Populate hidden Google Form
+  document.getElementById("gf_date").value = testDate;
+  document.getElementById("gf_gender").value = gender;
+  document.getElementById("gf_ageRange").value = ageRange;
+  document.getElementById("gf_leftGrip").value = left;
+  document.getElementById("gf_rightGrip").value = right;
+
+  // Submit silently
+  document.getElementById("hiddenGoogleForm").submit();
+});
+
+// Print / Save PDF
+document.getElementById("printBtn").addEventListener("click", () => {
+  window.print();
+});
+</script>
+
+</body>
+</html>
